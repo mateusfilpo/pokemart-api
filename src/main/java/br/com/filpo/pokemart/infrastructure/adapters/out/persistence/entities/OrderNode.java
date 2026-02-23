@@ -30,5 +30,5 @@ public class OrderNode {
     private UserNode user;
 
     @Relationship(type = "CONTAINS", direction = Relationship.Direction.OUTGOING)
-    private List<ItemNode> items; // Simplificando para o Neo4j por enquanto
+    private List<OrderItemRelationship> items;
 }

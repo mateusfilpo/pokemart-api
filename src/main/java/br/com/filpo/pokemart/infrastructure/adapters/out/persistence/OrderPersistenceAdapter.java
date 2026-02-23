@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.ports.out.OrderRepositoryPort;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
+import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderItemRelationship;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper.OrderMapper;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.repositories.SpringDataItemRepository;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.repositories.SpringDataOrderRepository;
@@ -26,12 +27,15 @@ public class OrderPersistenceAdapter implements OrderRepositoryPort {
     public Order save(Order order) {
         var node = OrderMapper.toNode(order);
         
-        // ⚠️ A MÁGICA DA CORREÇÃO AQUI:
-        // Buscamos o nó completo do banco usando o ID. Assim o Spring não apaga
-        // o nome, o preço e o estoque quando for salvar a relação do pedido.
         if (node.getItems() != null) {
-            List<ItemNode> fullItems = node.getItems().stream()
-                    .map(itemNode -> itemRepository.findById(itemNode.getId()).orElse(itemNode))
+            // ⚠️ Ajustado para pegar o item de dentro do Relacionamento
+            List<OrderItemRelationship> fullItems = node.getItems().stream()
+                    .map(rel -> {
+                        var fullItemNode = itemRepository.findById(rel.getItem().getId())
+                                .orElse(rel.getItem());
+                        rel.setItem(fullItemNode); // Devolve o item completo para a relação
+                        return rel;
+                    })
                     .collect(Collectors.toList());
             node.setItems(fullItems);
         }

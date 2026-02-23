@@ -1,9 +1,11 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper;
 
-import java.util.stream.Collectors;
-
 import br.com.filpo.pokemart.domain.models.Order;
+import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderNode;
+import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderItemRelationship;
+
+import java.util.stream.Collectors;
 
 public class OrderMapper {
 
@@ -16,13 +18,13 @@ public class OrderMapper {
                 .status(node.getStatus())
                 .user(UserMapper.toDomain(node.getUser()))
                 .items(node.getItems().stream()
-                        .map(itemNode -> {
-                            var item = ItemMapper.toDomain(itemNode);
+                        .map(rel -> { // ⚠️ 'rel' é o relacionamento agora
+                            var itemNode = rel.getItem();
                             return br.com.filpo.pokemart.domain.models.OrderItem.builder()
-                                    .productId(item.getId())
-                                    .name(item.getName())
-                                    .price(item.getPrice())
-                                    .quantity(1)
+                                    .productId(itemNode.getId())
+                                    .name(itemNode.getName())
+                                    .price(itemNode.getPrice())
+                                    .quantity(rel.getQuantity()) // ✅ Pegando a quantidade real do banco!
                                     .build();
                         })
                         .collect(Collectors.toList()))
@@ -38,11 +40,10 @@ public class OrderMapper {
                 .status(domain.getStatus())
                 .user(UserMapper.toNode(domain.getUser()))
                 .items(domain.getItems().stream()
-                        .map(item -> ItemMapper.toNode(
-                            br.com.filpo.pokemart.domain.models.Item.builder()
-                                .id(item.getProductId())
-                                .build()
-                        ))
+                        .map(domainItem -> OrderItemRelationship.builder()
+                                .quantity(domainItem.getQuantity()) // ✅ Salvando a quantidade no banco!
+                                .item(ItemNode.builder().id(domainItem.getProductId()).build())
+                                .build())
                         .collect(Collectors.toList()))
                 .build();
     }
