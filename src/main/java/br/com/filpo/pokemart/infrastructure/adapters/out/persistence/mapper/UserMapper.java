@@ -11,6 +11,7 @@ public class UserMapper {
                 .id(node.getId())
                 .name(node.getName())
                 .email(node.getEmail())
+                .password(node.getPassword())
                 .build();
     }
 
@@ -20,6 +21,7 @@ public class UserMapper {
                 .id(domain.getId())
                 .name(domain.getName())
                 .email(domain.getEmail())
+                .password(domain.getPassword())
                 .build();
     }
 }

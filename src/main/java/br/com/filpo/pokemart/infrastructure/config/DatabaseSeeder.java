@@ -26,6 +26,7 @@ public class DatabaseSeeder {
                         .id(UUID.randomUUID())
                         .name("Ash Ketchum")
                         .email("ash@pallet.com")
+                        .password("Pikachu123@")
                         .build();
                 userRepository.save(ash);
                 System.out.println("👤 Usuário de teste criado! Copie este ID para testar o Checkout: " + ash.getId());

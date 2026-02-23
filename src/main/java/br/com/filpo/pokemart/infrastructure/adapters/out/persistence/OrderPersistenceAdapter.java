@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.ports.out.OrderRepositoryPort;
-import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderItemRelationship;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper.OrderMapper;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.repositories.SpringDataItemRepository;
