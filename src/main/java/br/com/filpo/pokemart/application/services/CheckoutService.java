@@ -22,25 +22,41 @@ public class CheckoutService implements CheckoutUseCase {
     private final UserRepositoryPort userRepository;
 
     @Override
-    @Transactional // Garante que se um item falhar, nada é salvo (Atomicidade)
+    @Transactional
     public Order placeOrder(UUID userId, Order order) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // 1. Validar e Atualizar Estoque (Lógica do seu CartPage.js)
-        order.getItems().forEach(orderItem -> {
+        double totalAmount = 0.0; // Criamos a variável do total
+
+        // 1. Validar e Atualizar Estoque
+        for (var orderItem : order.getItems()) {
             var item = itemRepository.findById(orderItem.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Item indisponível: " + orderItem.getName()));
+                    .orElseThrow(() -> new RuntimeException("Item indisponível: " + orderItem.getProductId()));
             
+            // Regra de negócio bônus: Evitar estoque negativo
+            if (item.getStock() < orderItem.getQuantity()) {
+                throw new RuntimeException("Estoque insuficiente para: " + item.getName());
+            }
+
+            // Baixa o estoque e salva
             item.decreaseStock(orderItem.getQuantity());
-            itemRepository.save(item); // Persiste o novo estoque no Neo4j
-        });
+            itemRepository.save(item);
+
+            // ⚠️ A CORREÇÃO: Preenchemos os dados que o Front-end não mandou
+            orderItem.setName(item.getName());
+            orderItem.setPrice(item.getPrice());
+
+            // ⚠️ A CORREÇÃO: Calculamos o total da compra
+            totalAmount += item.getPrice() * orderItem.getQuantity();
+        }
 
         // 2. Preparar o Pedido
         order.setId(UUID.randomUUID());
         order.setUser(user);
         order.setCreatedAt(LocalDateTime.now());
         order.setStatus("COMPLETED");
+        order.setTotalAmount(totalAmount); // ⚠️ Guardamos o total calculado!
 
         // 3. Salvar o Pedido no Grafo
         return orderRepository.save(order);
