@@ -10,4 +10,5 @@ public interface UserUseCase {
     User createUser(User user);
     User getUserById(UUID id);
     List<Order> getUserOrderHistory(UUID userId);
+    User login(String email, String password);
 }

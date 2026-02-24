@@ -41,4 +41,19 @@ public class UserService implements UserUseCase {
         // Busca os pedidos e atrela ao usuário para retornar ao front-end
         return orderRepository.findByUserId(userId);
     }
+
+    @Override
+    public User login(String email, String password) {
+        // 1. Busca o usuário pelo e-mail
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
+
+        // 2. Confere se a senha bate (Lembre-se: no futuro usaremos BCrypt aqui!)
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Credenciais inválidas");
+        }
+
+        // 3. Se deu tudo certo, devolve o usuário
+        return user;
+    }
 }
