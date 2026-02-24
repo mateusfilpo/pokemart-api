@@ -50,4 +50,13 @@ public class CategoryPersistenceAdapter implements CategoryRepositoryPort {
                 .name(saved.getName())
                 .build();
     }
+
+    @Override
+    public Optional<Category> findByName(String name) {
+        return categoryRepository.findByName(name)
+                .map(node -> Category.builder()
+                        .id(node.getId())
+                        .name(node.getName())
+                        .build());
+    }
 }

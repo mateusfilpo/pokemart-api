@@ -9,5 +9,6 @@ import br.com.filpo.pokemart.domain.models.Category;
 public interface CategoryRepositoryPort {
     List<Category> findAll();
     Optional<Category> findById(UUID id);
+    Optional<Category> findByName(String name);
     Category save(Category category);
 }
