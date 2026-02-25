@@ -1,6 +1,10 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities;
 
-import org.springframework.data.neo4j.core.schema.RelationshipId;
+import java.util.UUID;
+
+import org.neo4j.driver.Config;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
@@ -16,8 +20,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderItemRelationship {
 
-    @RelationshipId
-    private Long id;
+    @Id
+    @GeneratedValue
+    private String id;
 
     private Integer quantity;
 

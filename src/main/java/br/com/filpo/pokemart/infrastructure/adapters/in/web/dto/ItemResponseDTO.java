@@ -15,7 +15,8 @@ public class ItemResponseDTO {
     private Double price;
     private String image;
     private Integer stock;
-    private String categoryName;
+    private String category;
+    private Boolean deleted;
 
     public static ItemResponseDTO fromDomain(Item item) {
         if (item == null) return null;
@@ -27,7 +28,8 @@ public class ItemResponseDTO {
                 .price(item.getPrice())
                 .image(item.getImageUrl())
                 .stock(item.getStock())
-                .categoryName(item.getCategory() != null ? item.getCategory().getName() : null)
+                .category(item.getCategory() != null ? item.getCategory().getName() : null)
+                .deleted(item.getDeleted() != null ? item.getDeleted() : false)
                 .build();
     }
 }

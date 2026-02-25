@@ -11,4 +11,6 @@ public interface ItemRepositoryPort {
     Optional<Item> findById(UUID id);
     Item save(Item item);
     void deleteById(UUID id);
+    void updateStatus(UUID id, boolean status);
+    void saveAll(List<Item> items);
 }

@@ -44,6 +44,17 @@ public class DatabaseSeeder implements CommandLineRunner {
             userRepository.save(ash);
             System.out.println("Usuário Ash criado com sucesso!");
         }
+
+        if (userRepository.findByEmail("admin@admin.com").isEmpty()) {
+            User ash = User.builder()
+                    .id(UUID.randomUUID())
+                    .name("Professor Carvalho")
+                    .email("admin@admin.com")
+                    .password("Senha123@")
+                    .build();
+            userRepository.save(ash);
+            System.out.println("Usuário Professor Carvalho criado com sucesso!");
+        }
     }
 
     private void seedItemsFromJson() {
@@ -56,41 +67,53 @@ public class DatabaseSeeder implements CommandLineRunner {
             InputStream inputStream = new ClassPathResource("items.json").getInputStream();
             JsonNode itemsJson = objectMapper.readTree(inputStream);
 
-            for (JsonNode node : itemsJson) {
-                String name = node.get("name").asString();
-                String description = node.get("description").asString();
-                String categoryName = node.get("category").asString();
-                double price = node.get("price").asDouble();
-                int stock = node.get("stock").asInt();
-                String image = node.get("image").asString();
-                Boolean deleted = node.get("deleted").asBoolean();
+            // 1. 🚀 CACHE DE CATEGORIAS: Busca todas de uma vez para evitar 50 findByName
+            java.util.Map<String, Category> categoryCache = categoryRepository.findAll()
+                    .stream()
+                    .collect(java.util.stream.Collectors.toMap(Category::getName, c -> c));
 
-                Category categoria = categoryRepository.findByName(categoryName)
-                        .orElseGet(() -> {
-                            Category novaCat = Category.builder()
-                                    .id(UUID.randomUUID())
-                                    .name(categoryName)
-                                    .build();
-                            return categoryRepository.save(novaCat);
-                        });
+            // 2. 🚀 LISTA PARA BATCH: Preparar todos os itens na memória
+            java.util.List<Item> itemsToSave = new java.util.ArrayList<>();
+
+            for (JsonNode node : itemsJson) {
+                String categoryName = node.get("category").asString();
+
+                // Busca no cache local primeiro
+                Category categoria = categoryCache.get(categoryName);
+
+                if (categoria == null) {
+                    // Se não existe nem no cache, cria e salva na hora para ter o ID
+                    Category novaCat = Category.builder()
+                            .id(UUID.randomUUID())
+                            .name(categoryName)
+                            .build();
+                    categoria = categoryRepository.save(novaCat);
+                    categoryCache.put(categoryName, categoria); // Guarda no cache para o próximo item
+                }
 
                 Item item = Item.builder()
                         .id(UUID.randomUUID())
-                        .name(name)
-                        .description(description)
-                        .price(price)
-                        .stock(stock)
-                        .imageUrl(image)
+                        .name(node.get("name").asString())
+                        .description(node.get("description").asString())
+                        .price(node.get("price").asDouble())
+                        .stock(node.get("stock").asInt())
+                        .imageUrl(node.get("image").asString())
                         .category(categoria)
-                        .deleted(deleted)
+                        .deleted(node.get("deleted").asBoolean())
                         .build();
                 
-                itemRepository.save(item);
+                itemsToSave.add(item);
             }
-            System.out.println("Catálogo importado do JSON com sucesso!");
+
+            // 3. 🚀 SALVAMENTO EM LOTE: Uma única viagem ao banco para todos os itens!
+            // Certifique-se de que a sua Porta/Repository tenha o método saveAll
+            itemRepository.saveAll(itemsToSave); 
+            
+            System.out.println("Catálogo importado do JSON com sucesso (" + itemsToSave.size() + " itens)!");
 
         } catch (Exception e) {
             System.err.println("Erro ao carregar itens do JSON: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

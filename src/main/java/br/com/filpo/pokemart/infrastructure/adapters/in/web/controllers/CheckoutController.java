@@ -34,6 +34,8 @@ public class CheckoutController {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+        
+        System.out.println("Request User Id: " + request.getUserId());
 
         Order processedOrder = checkoutUseCase.placeOrder(request.getUserId(), orderToProcess);
 
