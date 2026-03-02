@@ -1,5 +1,7 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper;
 
+import java.text.Normalizer;
+
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.models.Item;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.CategoryNode;
@@ -27,6 +29,7 @@ public class ItemMapper {
                 .stock(node.getStock())
                 .deleted(node.getDeleted())
                 .category(domainCategory)
+                .version(node.getVersion())
                 .build();
     }
 
@@ -41,6 +44,8 @@ public class ItemMapper {
                     .build();
         }
 
+        String searchString = normalizeText(domain.getName() + " " + domain.getDescription());
+
         return ItemNode.builder()
                 .id(domain.getId())
                 .name(domain.getName())
@@ -50,6 +55,16 @@ public class ItemMapper {
                 .stock(domain.getStock())
                 .deleted(domain.getDeleted())
                 .category(categoryNode)
+                .version(domain.getVersion())
+                .normalizedSearch(searchString)
                 .build();
+    }
+
+    private static String normalizeText(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toLowerCase();
     }
 }

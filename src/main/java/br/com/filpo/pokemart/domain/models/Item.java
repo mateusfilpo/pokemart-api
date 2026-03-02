@@ -1,6 +1,7 @@
 package br.com.filpo.pokemart.domain.models;
 
 import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,8 @@ public class Item {
     private Integer stock;
     private Boolean deleted;
     private Category category;
+    private Long version;
+    private String normalizedSearch;
 
     public boolean hasStock(int quantity) {
         return this.stock != null && this.stock >= quantity;

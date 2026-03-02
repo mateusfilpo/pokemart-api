@@ -12,6 +12,7 @@ public class UserResponseDTO {
     private UUID id;
     private String name;
     private String email;
+    private String role;
 
     public static UserResponseDTO fromDomain(User user) {
         if (user == null) return null;
@@ -19,6 +20,7 @@ public class UserResponseDTO {
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .role(user.getRole().name())
                 .build();
     }
 }

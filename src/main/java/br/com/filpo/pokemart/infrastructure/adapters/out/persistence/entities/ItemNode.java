@@ -2,6 +2,7 @@ package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities;
 
 import java.util.UUID;
 
+import org.springframework.data.annotation.Version;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
@@ -25,6 +26,10 @@ public class ItemNode {
     private String imageUrl;
     private Integer stock;
     private Boolean deleted;
+    private String normalizedSearch;
+
+    @Version
+    private Long version;
 
     @Relationship(type = "BELONGS_TO", direction = Relationship.Direction.OUTGOING)
     private CategoryNode category;

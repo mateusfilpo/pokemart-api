@@ -7,7 +7,19 @@ spring:
     authentication:
       username: ${NEO4J_USERNAME}
       password: ${NEO4J_PASSWORD}
+  
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   level:
     '[org.springframework.data.neo4j]': INFO
+    '[org.springframework.data.neo4j.cypher]': DEBUG
+    '[org.springframework.cache]': TRACE
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:my-secret-key-pokemon-2026}

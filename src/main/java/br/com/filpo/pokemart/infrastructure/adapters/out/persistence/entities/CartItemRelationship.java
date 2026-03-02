@@ -10,18 +10,18 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@RelationshipProperties
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItemRelationship {
+@RelationshipProperties
+public class CartItemRelationship {
 
     @Id
     @GeneratedValue
     private String id;
+
     private Integer quantity;
-    private Double price;
 
     @TargetNode
     private ItemNode item;

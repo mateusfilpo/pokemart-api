@@ -9,4 +9,7 @@ public interface UserRepositoryPort {
     Optional<User> findById(UUID id);
     Optional<User> findByEmail(String email);
     User save(User user);
+    void upsertCartItem(UUID userId, UUID itemId, Integer quantity);
+    void removeCartItem(UUID userId, UUID itemId);
+    void clearCart(UUID userId);
 }

@@ -1,0 +1,57 @@
+package br.com.filpo.pokemart.application.services;
+
+import br.com.filpo.pokemart.domain.models.CartItem;
+import br.com.filpo.pokemart.domain.models.Item;
+import br.com.filpo.pokemart.domain.ports.in.CartUseCase;
+import br.com.filpo.pokemart.domain.ports.out.ItemRepositoryPort;
+import br.com.filpo.pokemart.domain.ports.out.UserRepositoryPort;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class CartService implements CartUseCase {
+
+    private final UserRepositoryPort userRepository;
+    private final ItemRepositoryPort itemRepository;
+
+    @Override
+    public List<CartItem> getCart(UUID userId) {
+        return userRepository
+            .findById(userId)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"))
+            .getCart();
+    }
+
+    @Override
+    public List<CartItem> updateCartItem(
+        UUID userId,
+        UUID itemId,
+        Integer quantity
+    ) {
+        if (quantity > 0) {
+            Item item = itemRepository
+                .findById(itemId)
+                .orElseThrow(() -> new RuntimeException("Item não encontrado"));
+
+            if (quantity > item.getStock()) {
+                throw new IllegalArgumentException(
+                    "Quantidade solicitada maior que o estoque disponível"
+                );
+            }
+
+            userRepository.upsertCartItem(userId, itemId, quantity);
+        } else {
+            userRepository.removeCartItem(userId, itemId);
+        }
+
+        return getCart(userId);
+    }
+
+    @Override
+    public void clearCart(UUID userId) {
+        userRepository.clearCart(userId);
+    }
+}

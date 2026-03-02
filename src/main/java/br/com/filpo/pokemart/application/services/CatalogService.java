@@ -1,15 +1,20 @@
 package br.com.filpo.pokemart.application.services;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.models.Item;
+import br.com.filpo.pokemart.domain.models.PageResult;
 import br.com.filpo.pokemart.domain.ports.in.CatalogUseCase;
 import br.com.filpo.pokemart.domain.ports.out.CategoryRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.ItemRepositoryPort;
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.CategoryStatsDTO;
 import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.ItemRequestDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class CatalogService implements CatalogUseCase {
 
     private final ItemRepositoryPort itemRepository;
-    private final CategoryRepositoryPort categoryRepository; // ⚠️ Injetado para lidar com Categorias!
-
-    @Override
-    public List<Item> listAllAvailableItems() {
-        return itemRepository.findAll(); // Temporário para o Admin ver tudo!
-
-        // return itemRepository.findAll().stream()
-        //         // Proteção contra o NPE que sofremos antes!
-        //         .filter(item -> item.getDeleted() != null && !item.getDeleted())
-        //         .collect(Collectors.toList());
-    }
+    private final CategoryRepositoryPort categoryRepository;
 
     @Override
     public Item getItemDetails(UUID id) {
@@ -38,6 +33,7 @@ public class CatalogService implements CatalogUseCase {
     }
 
     @Override
+    @CacheEvict(value = {"vitrine", "adminVitrine", "categoryStats"}, allEntries = true)
     public Item createItem(ItemRequestDTO request) {
         Category category = resolveCategory(request.getCategory());
 
@@ -57,10 +53,11 @@ public class CatalogService implements CatalogUseCase {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"vitrine", "adminVitrine", "categoryStats"}, allEntries = true)
     public Item updateItem(UUID id, ItemRequestDTO request) {
         Item existingItem = getItemDetails(id);
         Category category = resolveCategory(request.getCategory());
-// ⚠️ NOSSOS ESPIÕES:
+
         System.out.println("--- DEBUG UPDATE ITEM ---");
         System.out.println("Status atual no Banco: " + existingItem.getDeleted());
         System.out.println("Status recebido do Front: " + request.getDeleted());
@@ -70,7 +67,7 @@ public class CatalogService implements CatalogUseCase {
         Boolean newDeletedStatus = request.getDeleted() != null ? request.getDeleted() : existingItem.getDeleted();
         
         System.out.println("Status final que vamos tentar salvar: " + newDeletedStatus);
-        // Recriamos o Item mantendo o ID original
+        
         Item updatedItem = Item.builder()
                 .id(existingItem.getId())
                 .name(request.getName())
@@ -86,36 +83,16 @@ public class CatalogService implements CatalogUseCase {
     }
 
     @Override
+    @CacheEvict(value = {"vitrine", "adminVitrine", "categoryStats"}, allEntries = true)
     public void toggleItemStatus(UUID id, boolean status) {
         itemRepository.updateStatus(id, status);
     }
 
     @Override
     public void deleteItem(UUID id) {
-        // O Soft Delete agora usa a nossa rota ultrarrápida do Cypher!
         toggleItemStatus(id, true); 
     }
 
-    // @Override
-    // public void deleteItem(UUID id) {
-    //     Item existingItem = getItemDetails(id);
-        
-    //     // Soft Delete: Mantém o ID e os dados, mas marca como deletado para o front-end ignorar
-    //     Item deletedItem = Item.builder()
-    //             .id(existingItem.getId())
-    //             .name(existingItem.getName())
-    //             .description(existingItem.getDescription())
-    //             .price(existingItem.getPrice())
-    //             .stock(existingItem.getStock())
-    //             .imageUrl(existingItem.getImageUrl())
-    //             .category(existingItem.getCategory())
-    //             .deleted(true) // ⚠️ O item some da loja, mas os pedidos antigos não quebram!
-    //             .build();
-                
-    //     itemRepository.save(deletedItem);
-    // }
-
-    // Método auxiliar (igual ao do Seeder) para buscar ou criar a Categoria
     private Category resolveCategory(String categoryName) {
         return categoryRepository.findByName(categoryName)
                 .orElseGet(() -> {
@@ -125,5 +102,32 @@ public class CatalogService implements CatalogUseCase {
                             .build();
                     return categoryRepository.save(newCat);
                 });
+    }
+
+    @Override
+    @Cacheable(value = "vitrine", key = "{#page, #size, #category, #search, #sort}")
+    public PageResult<Item> getActiveItems(int page, int size, String category, String search, String sort) {
+        return itemRepository.findActiveItems(page, size, category, normalizeText(search), sort);
+    }
+
+    @Override
+    @Cacheable(value = "adminVitrine", key = "{#page, #size, #category, #search, #sort}")
+    public PageResult<Item> getAllItems(int page, int size, String category, String search, String sort) {
+        return itemRepository.findAllItems(page, size, category, search, sort);
+    }
+
+    @Override
+    @Cacheable(value = "categoryStats", key = "#search != null ? #search : ''")
+    public List<CategoryStatsDTO> getCategoryStats(String search) {
+        String safeSearch = search == null ? "" : search; 
+        return itemRepository.countActiveItemsByCategory(safeSearch);
+    }
+
+    private static String normalizeText(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toLowerCase();
     }
 }
