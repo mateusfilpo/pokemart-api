@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.models.Item;
 import br.com.filpo.pokemart.domain.models.PageResult;
@@ -29,7 +30,7 @@ public class CatalogService implements CatalogUseCase {
     @Override
     public Item getItemDetails(UUID id) {
         return itemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found with ID: " + id));
     }
 
     @Override
@@ -58,16 +59,6 @@ public class CatalogService implements CatalogUseCase {
         Item existingItem = getItemDetails(id);
         Category category = resolveCategory(request.getCategory());
 
-        System.out.println("--- DEBUG UPDATE ITEM ---");
-        System.out.println("Status atual no Banco: " + existingItem.getDeleted());
-        System.out.println("Status recebido do Front: " + request.getDeleted());
-        System.out.println("category: " + category);
-        System.out.println("Request: " + request);
-
-        Boolean newDeletedStatus = request.getDeleted() != null ? request.getDeleted() : existingItem.getDeleted();
-        
-        System.out.println("Status final que vamos tentar salvar: " + newDeletedStatus);
-        
         Item updatedItem = Item.builder()
                 .id(existingItem.getId())
                 .name(request.getName())
@@ -76,7 +67,7 @@ public class CatalogService implements CatalogUseCase {
                 .stock(request.getStock())
                 .imageUrl(request.getImage())
                 .category(category)
-                .deleted(existingItem.getDeleted() != null ? existingItem.getDeleted() : false)
+                .deleted(request.getDeleted() != null ? request.getDeleted() : existingItem.getDeleted())
                 .build();
 
         return itemRepository.save(updatedItem);

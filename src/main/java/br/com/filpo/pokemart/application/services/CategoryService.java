@@ -1,5 +1,6 @@
 package br.com.filpo.pokemart.application.services;
 
+import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.ports.in.CategoryUseCase;
 import br.com.filpo.pokemart.domain.ports.out.CategoryRepositoryPort;
@@ -27,7 +28,7 @@ public class CategoryService implements CategoryUseCase {
         return categoryRepository
             .findById(id)
             .orElseThrow(() ->
-                new RuntimeException("Categoria não encontrada: " + id)
+                new ResourceNotFoundException("Category not found with ID: " + id)
             );
     }
 

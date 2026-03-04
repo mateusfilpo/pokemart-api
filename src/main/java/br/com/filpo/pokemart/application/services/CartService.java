@@ -1,14 +1,18 @@
 package br.com.filpo.pokemart.application.services;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
+import br.com.filpo.pokemart.domain.exceptions.BusinessRuleException;
+import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.CartItem;
 import br.com.filpo.pokemart.domain.models.Item;
 import br.com.filpo.pokemart.domain.ports.in.CartUseCase;
 import br.com.filpo.pokemart.domain.ports.out.ItemRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.UserRepositoryPort;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +25,7 @@ public class CartService implements CartUseCase {
     public List<CartItem> getCart(UUID userId) {
         return userRepository
             .findById(userId)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"))
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"))
             .getCart();
     }
 
@@ -34,12 +38,10 @@ public class CartService implements CartUseCase {
         if (quantity > 0) {
             Item item = itemRepository
                 .findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Item não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
             if (quantity > item.getStock()) {
-                throw new IllegalArgumentException(
-                    "Quantidade solicitada maior que o estoque disponível"
-                );
+                throw new BusinessRuleException("Requested quantity exceeds available stock");
             }
 
             userRepository.upsertCartItem(userId, itemId, quantity);

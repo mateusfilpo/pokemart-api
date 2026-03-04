@@ -1,14 +1,10 @@
 package br.com.filpo.pokemart.infrastructure.adapters.in.web.controllers;
 
-import br.com.filpo.pokemart.domain.models.Order;
-import br.com.filpo.pokemart.domain.models.User;
-import br.com.filpo.pokemart.domain.ports.in.UserUseCase;
-import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.LoginRequestDTO;
-import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.UserResponseDTO;
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +13,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import br.com.filpo.pokemart.domain.models.Order;
+import br.com.filpo.pokemart.domain.models.User;
+import br.com.filpo.pokemart.domain.ports.in.UserUseCase;
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.OrderResponseDTO;
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.UserRequestDTO;
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.UserResponseDTO;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,29 +41,28 @@ public class UserController {
     }
 
     @GetMapping("/{id}/orders")
-    public ResponseEntity<List<Order>> getUserOrders(@PathVariable UUID id) {
+    public ResponseEntity<List<OrderResponseDTO>> getUserOrders(@PathVariable UUID id) {
+        
         List<Order> orders = userUseCase.getUserOrderHistory(id);
-        return ResponseEntity.ok(orders);
-    }
+        
+        List<OrderResponseDTO> response = orders.stream()
+                .map(OrderResponseDTO::fromDomain)
+                .collect(Collectors.toList());
 
+        return ResponseEntity.ok(response);
+    }
+    
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@RequestBody User user) {
-        User createdUser = userUseCase.createUser(user);
-        return ResponseEntity.ok(UserResponseDTO.fromDomain(createdUser));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<UserResponseDTO> login(
-        @RequestBody LoginRequestDTO request
-    ) {
-        try {
-            User user = userUseCase.login(
-                request.getEmail(),
-                request.getPassword()
-            );
-            return ResponseEntity.ok(UserResponseDTO.fromDomain(user));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<UserResponseDTO> createUser(@RequestBody @Valid UserRequestDTO request) {        
+        User userToCreate = request.toDomain(); 
+        
+        User createdUser = userUseCase.createUser(userToCreate);
+        
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdUser.getId())
+                .toUri();
+        
+        return ResponseEntity.created(uri).body(UserResponseDTO.fromDomain(createdUser));
     }
 }

@@ -1,22 +1,21 @@
 package br.com.filpo.pokemart.application.services;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import br.com.filpo.pokemart.domain.exceptions.BusinessRuleException;
+import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.models.OrderItem;
 import br.com.filpo.pokemart.domain.ports.in.CheckoutUseCase;
 import br.com.filpo.pokemart.domain.ports.out.ItemRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.OrderRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.UserRepositoryPort;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,14 +27,20 @@ public class CheckoutService implements CheckoutUseCase {
 
     @Override
     @Transactional
-    @CacheEvict(value = {"vitrine", "adminVitrine", "categoryStats"}, allEntries = true)
+    @CacheEvict(
+        value = { "vitrine", "adminVitrine", "categoryStats" },
+        allEntries = true
+    )
     public Order placeOrder(UUID userId) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        var user = userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         var cart = user.getCart();
         if (cart == null || cart.isEmpty()) {
-            throw new RuntimeException("Não é possível finalizar a compra com o carrinho vazio.");
+            throw new BusinessRuleException(
+                "Cannot complete checkout with an empty cart."
+            );
         }
 
         double totalAmount = 0.0;
@@ -46,26 +51,26 @@ public class CheckoutService implements CheckoutUseCase {
             var quantity = cartItem.getQuantity();
 
             if (item.getStock() < quantity) {
-                throw new RuntimeException("Estoque insuficiente para: " + item.getName());
+                throw new BusinessRuleException(
+                    "Insufficient stock for: " + item.getName()
+                );
             }
 
             item.decreaseStock(quantity);
-            try {
-                itemRepository.save(item);
-            } catch (OptimisticLockingFailureException e) {
-                throw new RuntimeException("O estoque de " + item.getName() + " sofreu alteração por outro treinador! Atualize a página e tente novamente.");
-            }
-            
+            itemRepository.save(item);
+
             var orderItem = OrderItem.builder()
-                    .productId(item.getId())
-                    .name(item.getName())
-                    .price(item.getPrice())
-                    .quantity(quantity)
-                    .build();
-            
+                .productId(item.getId())
+                .name(item.getName())
+                .price(item.getPrice())
+                .quantity(quantity)
+                .build();
+
             orderItems.add(orderItem);
             totalAmount += item.getPrice() * quantity;
         }
+
+        user.setCart(new ArrayList<>());
 
         Order order = new Order();
         order.setId(UUID.randomUUID());
@@ -73,7 +78,7 @@ public class CheckoutService implements CheckoutUseCase {
         order.setItems(orderItems);
         order.setTotalAmount(totalAmount);
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus("COMPLETED");
+        order.setStatus("APPROVED");
 
         Order savedOrder = orderRepository.save(order);
 

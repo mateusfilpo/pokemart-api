@@ -6,8 +6,11 @@ import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import br.com.filpo.pokemart.domain.exceptions.BusinessRuleException;
+import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.models.User;
+import br.com.filpo.pokemart.domain.models.UserRole;
 import br.com.filpo.pokemart.domain.ports.in.UserUseCase;
 import br.com.filpo.pokemart.domain.ports.out.OrderRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.UserRepositoryPort;
@@ -24,7 +27,7 @@ public class UserService implements UserUseCase {
     @Override
     public User createUser(User user) {
         userRepository.findByEmail(user.getEmail()).ifPresent(u -> {
-            throw new IllegalArgumentException("Já existe um usuário com este e-mail.");
+            throw new BusinessRuleException("Email is already in use.");
         });
         
         user.setId(UUID.randomUUID());
@@ -32,7 +35,7 @@ public class UserService implements UserUseCase {
         String encryptedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encryptedPassword);
         
-        user.setRole(br.com.filpo.pokemart.domain.models.UserRole.USER);
+        user.setRole(UserRole.USER);
         
         return userRepository.save(user);
     }
@@ -40,23 +43,11 @@ public class UserService implements UserUseCase {
     @Override
     public User getUserById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
     }
 
     @Override
     public List<Order> getUserOrderHistory(UUID userId) {
         return orderRepository.findByUserId(userId);
-    }
-
-    @Override
-    public User login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Credenciais inválidas"));
-
-        if (!user.getPassword().equals(password)) {
-            throw new RuntimeException("Credenciais inválidas");
-        }
-
-        return user;
     }
 }
