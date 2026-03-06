@@ -5,7 +5,7 @@ import br.com.filpo.pokemart.domain.models.PageResult;
 import br.com.filpo.pokemart.domain.ports.in.CatalogUseCase;
 import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.ItemRequestDTO;
 import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.ItemResponseDTO;
-import jakarta.validation.Valid; // 🛡️ Importe a mágica aqui!
+import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.UUID;
 import java.util.stream.Collectors;
