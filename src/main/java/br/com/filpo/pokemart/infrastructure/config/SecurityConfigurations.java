@@ -41,6 +41,8 @@ public class SecurityConfigurations {
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/auth/login")
                     .permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/logout")
+                    .permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/users")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/items")
@@ -98,7 +100,7 @@ public class SecurityConfigurations {
         );
 
         configuration.setAllowedHeaders(
-            Arrays.asList("Authorization", "Content-Type")
+            Arrays.asList("Authorization", "Content-Type", "Accept", "Cookie")
         );
         configuration.setAllowCredentials(true);
 
