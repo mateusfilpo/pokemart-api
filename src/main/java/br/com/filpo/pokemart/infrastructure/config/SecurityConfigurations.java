@@ -1,8 +1,9 @@
 package br.com.filpo.pokemart.infrastructure.config;
 
-import br.com.filpo.pokemart.infrastructure.adapters.out.security.SecurityFilter;
 import java.util.Arrays;
-import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,12 +20,19 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import br.com.filpo.pokemart.infrastructure.adapters.out.security.SecurityFilter;
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfigurations {
 
     private final SecurityFilter securityFilter;
+
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private org.springframework.web.servlet.HandlerExceptionResolver exceptionResolver;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity)
@@ -37,36 +45,30 @@ public class SecurityConfigurations {
             )
             .authorizeHttpRequests(authorize ->
                 authorize
-                    .requestMatchers("/error")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/login")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/logout")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/users")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/categories")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/categories/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items/all")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/categories")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/items")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PUT, "/api/items/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/items/**")
-                    .hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/items/**")
-                    .hasRole("ADMIN")
-                    .anyRequest()
-                    .authenticated()
+                    .requestMatchers("/error").permitAll()
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/items").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/items/all").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.POST, "/api/items").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/items/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PATCH, "/api/items/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
+                    .anyRequest().authenticated()
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> 
+                    exceptionResolver.resolveException(request, response, null, authException)
+                )
+                .accessDeniedHandler((request, response, accessDeniedException) -> 
+                    exceptionResolver.resolveException(request, response, null, accessDeniedException)
+                )
             )
             .addFilterBefore(
                 securityFilter,

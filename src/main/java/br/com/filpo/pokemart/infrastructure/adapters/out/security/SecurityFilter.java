@@ -34,8 +34,6 @@ public class SecurityFilter extends OncePerRequestFilter {
                 UserDetails user = authorizationService.loadUserByUsername(
                     login
                 );
-                // System.out.println("Usuário logado: " + user.getUsername());
-                // System.out.println("Permissões: " + user.getAuthorities());
 
                 var authentication = new UsernamePasswordAuthenticationToken(
                     user,
