@@ -27,3 +27,8 @@ api:
   security:
     token:
       secret: ${JWT_SECRET:my-secret-key-pokemon-2026}
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: method
