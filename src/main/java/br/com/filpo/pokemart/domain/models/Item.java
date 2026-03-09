@@ -2,6 +2,7 @@ package br.com.filpo.pokemart.domain.models;
 
 import java.util.UUID;
 
+import br.com.filpo.pokemart.domain.exceptions.BusinessRuleException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +30,7 @@ public class Item {
 
     public void decreaseStock(int quantity) {
         if (!hasStock(quantity)) {
-            throw new IllegalArgumentException("Estoque insuficiente para o item: " + this.name);
+            throw new BusinessRuleException("Estoque insuficiente para o item: " + this.name);
         }
         this.stock -= quantity;
     }
