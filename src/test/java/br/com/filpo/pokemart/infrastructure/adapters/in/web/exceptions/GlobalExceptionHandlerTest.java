@@ -36,7 +36,6 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        // Toda exceção capturada pelo nosso Handler precisa saber de qual rota veio o erro
         when(request.getRequestURI()).thenReturn("/api/v1/pokemart");
     }
 
@@ -85,7 +84,6 @@ class GlobalExceptionHandlerTest {
     @DisplayName("Deve retornar 422 Unprocessable Content e ValidationError para MethodArgumentNotValidException")
     void shouldHandleMethodArgumentNotValidException() {
         // Arrange
-        // Criamos o erro do Spring simulando que o usuário mandou um preço negativo
         FieldError fieldError1 = new FieldError("ItemRequestDTO", "price", "Price must be greater than zero.");
         FieldError fieldError2 = new FieldError("ItemRequestDTO", "name", "Item name is required.");
         
@@ -108,7 +106,6 @@ class GlobalExceptionHandlerTest {
         assertEquals("Invalid data", errorBody.getError());
         assertEquals("/api/v1/pokemart", errorBody.getPath());
         
-        // Verifica se a lista de erros de campo foi populada corretamente
         assertEquals(2, errorBody.getErrors().size());
         assertEquals("price", errorBody.getErrors().get(0).fieldName());
         assertEquals("Price must be greater than zero.", errorBody.getErrors().get(0).message());
@@ -120,7 +117,6 @@ class GlobalExceptionHandlerTest {
     @DisplayName("Deve retornar 401 Unauthorized e mensagem fixa para AuthenticationException")
     void shouldHandleAuthenticationException() {
         // Arrange
-        // AuthenticationException é abstrata, então usamos mock
         AuthenticationException exception = mock(AuthenticationException.class);
 
         // Act
@@ -133,7 +129,7 @@ class GlobalExceptionHandlerTest {
         CustomError errorBody = response.getBody();
         assertNotNull(errorBody);
         assertEquals(401, errorBody.getStatus());
-        assertEquals("Invalid credentials", errorBody.getError()); // Mensagem fixa de segurança
+        assertEquals("Invalid credentials", errorBody.getError());
         assertEquals("/api/v1/pokemart", errorBody.getPath());
     }
 
