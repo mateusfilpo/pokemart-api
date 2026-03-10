@@ -7,6 +7,7 @@ import br.com.filpo.pokemart.domain.models.Item;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.CategoryNode;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
 
+@lombok.experimental.UtilityClass
 public class ItemMapper {
 
     public static Item toDomain(ItemNode node) {
@@ -61,7 +62,6 @@ public class ItemMapper {
     }
 
     private static String normalizeText(String text) {
-        if (text == null) return "";
         String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
         return normalized
                 .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")

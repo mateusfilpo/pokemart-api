@@ -7,6 +7,7 @@ import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.Us
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+@lombok.experimental.UtilityClass
 public class UserMapper {
 
     public static User toDomain(UserNode node) {
