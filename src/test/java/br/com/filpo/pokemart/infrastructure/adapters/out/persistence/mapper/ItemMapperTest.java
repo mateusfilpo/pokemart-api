@@ -1,14 +1,17 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.models.Item;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.CategoryNode;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
-import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 class ItemMapperTest {
 
@@ -159,5 +162,21 @@ class ItemMapperTest {
         assertEquals("Item Solto", result.getName());
         assertEquals("item solto sem categoria", result.getNormalizedSearch());
         assertNull(result.getCategory());
+    }
+
+    @Test
+    @DisplayName("toNode: Deve lidar com nome e descrição nulos ao gerar a busca normalizada")
+    void shouldHandleNullNameAndDescriptionInNormalization() {
+        // Arrange
+        Item itemDomain = Item.builder()
+                .name(null)
+                .description(null)
+                .build();
+
+        // Act
+        ItemNode result = ItemMapper.toNode(itemDomain);
+
+        // Assert
+        assertEquals("null null", result.getNormalizedSearch());
     }
 }

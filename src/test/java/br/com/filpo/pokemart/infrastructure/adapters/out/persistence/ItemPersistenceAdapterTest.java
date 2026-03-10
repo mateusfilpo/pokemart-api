@@ -199,4 +199,148 @@ class ItemPersistenceAdapterTest {
         assertEquals("Pokeballs", result.get(1).getCategory());
         assertEquals(10L, result.get(1).getCount());
     }
+
+    @Test
+    @DisplayName("save: Deve salvar novo item mesmo quando categoria não é encontrada no banco")
+    void shouldSaveEvenIfCategoryNotFound() {
+        // Arrange
+        Item newItem = Item.builder().name("TM 01").category(mockCategory).build();
+        when(categoryRepository.findById(mockCategoryId)).thenReturn(Optional.empty());
+        when(itemRepository.save(any(ItemNode.class))).thenReturn(mockItemNode);
+
+        // Act
+        itemPersistenceAdapter.save(newItem);
+
+        // Assert
+        verify(itemRepository).save(any(ItemNode.class));
+    }
+
+    @Test
+    @DisplayName("save: Deve lidar com salvamento de item sem categoria")
+    void shouldSaveItemWithoutCategory() {
+        // Arrange
+        Item itemNoCat = Item.builder().id(mockItemId).name("No Cat").category(null).build();
+        when(itemRepository.findById(mockItemId)).thenReturn(Optional.of(mockItemNode));
+        when(itemRepository.save(any(ItemNode.class))).thenReturn(mockItemNode);
+
+        // Act
+        itemPersistenceAdapter.save(itemNoCat);
+
+        // Assert
+        verify(categoryRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("buildPageRequest: Deve cobrir todas as variações de ordenação")
+    void shouldCoverAllSortOptions() {
+        // Arrange
+        Page<ItemNode> emptyPage = new PageImpl<>(List.of());
+        when(itemRepository.findActiveItemsWithFilters(any(), any(), any()))
+            .thenReturn(emptyPage);
+
+        // Act
+        String[] sortOptions = {"price-asc", "price-desc", "name-asc", "name-desc", "invalido"};
+        
+        for (String sort : sortOptions) {
+            itemPersistenceAdapter.findActiveItems(0, 10, null, null, sort);
+        }
+        
+        itemPersistenceAdapter.findActiveItems(0, 10, null, "potion", null);
+
+        verify(itemRepository, times(6)).findActiveItemsWithFilters(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("findAllItems: Deve buscar todos os itens (incluindo deletados)")
+    void shouldFindAllItemsIncludingDeleted() {
+        Page<ItemNode> springPage = new PageImpl<>(List.of(mockItemNode));
+        when(itemRepository.findAllItemsWithFilters(any(), any(), any())).thenReturn(springPage);
+
+        PageResult<Item> result = itemPersistenceAdapter.findAllItems(0, 10, null, null, null);
+
+        assertNotNull(result);
+        verify(itemRepository).findAllItemsWithFilters(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("saveAll: Deve persistir lista de itens")
+    void shouldSaveAllItems() {
+        List<Item> items = List.of(mockItem);
+        itemPersistenceAdapter.saveAll(items);
+        verify(itemRepository).saveAll(any());
+    }
+
+    @Test
+    @DisplayName("count: Deve retornar o total de itens")
+    void shouldReturnTotalCount() {
+        when(itemRepository.count()).thenReturn(100L);
+        long count = itemPersistenceAdapter.count();
+        assertEquals(100L, count);
+    }
+    
+    @Test
+    @DisplayName("save: Caso o ID exista mas o Node não seja encontrado no banco")
+    void shouldCreateNewIfIdExistsButNodeNotFound() {
+        // Arrange
+        Item item = Item.builder().id(mockItemId).name("Ghost Item").build();
+        when(itemRepository.findById(mockItemId)).thenReturn(Optional.empty()); 
+        when(itemRepository.save(any(ItemNode.class))).thenReturn(mockItemNode);
+
+        // Act
+        itemPersistenceAdapter.save(item);
+
+        // Assert
+        verify(itemRepository).save(any(ItemNode.class));
+    }
+
+    @Test
+    @DisplayName("buildPageRequest: Deve cobrir branch de busca nula e ordenação vazia")
+    void shouldCoverNullSearchAndEmptySort() {
+        // Arrange
+        Page<ItemNode> emptyPage = new PageImpl<>(List.of());
+        when(itemRepository.findActiveItemsWithFilters(any(), any(), any())).thenReturn(emptyPage);
+
+        // Act & Assert
+        itemPersistenceAdapter.findActiveItems(0, 10, null, null, null);
+        
+        itemPersistenceAdapter.findActiveItems(0, 10, null, "  ", "");
+
+        verify(itemRepository, times(2)).findActiveItemsWithFilters(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("mapToPageResult: Deve mapear corretamente metadados de paginação")
+    void shouldMapPageResultWithFullMetadata() {
+        // Arrange
+        PageRequest pageReq = PageRequest.of(0, 1);
+        Page<ItemNode> pageNode = new PageImpl<>(List.of(mockItemNode), pageReq, 10);
+        
+        when(itemRepository.findActiveItemsWithFilters(any(), any(), any())).thenReturn(pageNode);
+
+        // Act
+        PageResult<Item> result = itemPersistenceAdapter.findActiveItems(0, 1, null, null, null);
+
+        // Assert
+        assertTrue(result.isHasNext());
+        assertEquals(10, result.getTotalElements());
+        assertEquals(10, result.getTotalPages());
+        assertEquals(0, result.getCurrentPage());
+        assertNotNull(result.getData());
+    }
+
+    @Test
+    @DisplayName("save: Deve cobrir a branch onde a categoria existe no domínio mas não no DB (Update)")
+    void shouldHandleCategoryNotFoundInDbDuringUpdate() {
+        // Arrange
+        Item updateItem = Item.builder().id(mockItemId).name("Update").category(mockCategory).build();
+        when(itemRepository.findById(mockItemId)).thenReturn(Optional.of(mockItemNode));
+        when(categoryRepository.findById(any())).thenReturn(Optional.empty());
+        when(itemRepository.save(any())).thenReturn(mockItemNode);
+
+        // Act
+        itemPersistenceAdapter.save(updateItem);
+
+        // Assert
+        verify(itemRepository).save(mockItemNode);
+    }
 }

@@ -1,17 +1,21 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.models.OrderItem;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.ItemNode;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderItemRelationship;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderNode;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 class OrderMapperTest {
 
@@ -144,5 +148,39 @@ class OrderMapperTest {
     @DisplayName("toNode: Deve retornar null se a Order de Domínio for null")
     void shouldReturnNullWhenOrderDomainIsNull() {
         assertNull(OrderMapper.toNode(null));
+    }
+
+    @Test
+    @DisplayName("toDomain: Deve retornar uma lista vazia se o OrderNode não tiver itens (Cobre branch null)")
+    void shouldReturnEmptyListWhenNodeItemsIsNull() {
+        // Arrange
+        OrderNode node = OrderNode.builder()
+                .id(UUID.randomUUID())
+                .items(null)
+                .build();
+
+        // Act
+        Order result = OrderMapper.toDomain(node);
+
+        // Assert
+        assertNotNull(result.getItems());
+        assertTrue(result.getItems().isEmpty(), "Deveria ter retornado uma lista vazia e não null");
+    }
+
+    @Test
+    @DisplayName("toNode: Deve retornar uma lista vazia se a Order de domínio não tiver itens (Cobre branch null)")
+    void shouldReturnEmptyListWhenDomainItemsIsNull() {
+        // Arrange
+        Order domain = Order.builder()
+                .id(UUID.randomUUID())
+                .items(null)
+                .build();
+
+        // Act
+        OrderNode result = OrderMapper.toNode(domain);
+
+        // Assert
+        assertNotNull(result.getItems());
+        assertTrue(result.getItems().isEmpty(), "Deveria ter mapeado para uma lista vazia de relacionamentos");
     }
 }

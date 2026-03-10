@@ -9,7 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.MockedStatic;
+import static org.mockito.Mockito.mockStatic;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 
 import br.com.filpo.pokemart.domain.models.UserRole;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.UserNode;
@@ -72,17 +78,20 @@ class TokenServiceTest {
     }
 
     @Test
-    @DisplayName("generateToken: Deve lançar exceção se a secret estiver nula/inválida")
+    @DisplayName("generateToken: Deve capturar JWTCreationException e lançar RuntimeException (Cobre o catch)")
     void shouldThrowExceptionWhenCreationFails() {
         // Arrange
-        ReflectionTestUtils.setField(tokenService, "secret", null);
+        try (MockedStatic<Algorithm> mockedAlgorithm = mockStatic(Algorithm.class)) {
+            mockedAlgorithm.when(() -> Algorithm.HMAC256(anyString()))
+                           .thenThrow(new JWTCreationException("Erro forçado do Mockito", new Throwable()));
 
-        // Act & Assert
-        Exception exception = assertThrows(
-            Exception.class,
-            () -> tokenService.generateToken(mockUser)
-        );
+            // Act & Assert
+            RuntimeException exception = assertThrows(
+                RuntimeException.class,
+                () -> tokenService.generateToken(mockUser)
+            );
 
-        assertNotNull(exception);
+            assertEquals("Erro ao gerar token JWT", exception.getMessage());
+        }
     }
 }

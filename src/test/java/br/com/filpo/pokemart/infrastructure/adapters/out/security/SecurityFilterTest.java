@@ -138,4 +138,46 @@ class SecurityFilterTest {
         verify(authorizationService, never()).loadUserByUsername(anyString());
         verify(filterChain, times(1)).doFilter(request, response);
     }
+
+    @Test
+    @DisplayName("Não deve autenticar quando existirem outros cookies, mas nenhum for o 'pokemart_token'")
+    void shouldNotAuthenticateWhenOtherCookiesExistButNotOurs() throws Exception {
+        // Arrange
+        request.setCookies(new Cookie("random_cookie", "some-value"));
+
+        // Act
+        securityFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Não deve autenticar quando o Header Authorization não começar com 'Bearer '")
+    void shouldNotAuthenticateWhenAuthHeaderIsInvalidFormat() throws Exception {
+        // Arrange
+        request.addHeader("Authorization", "Basic dXNlcjpwYXNz"); 
+
+        // Act
+        securityFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("Não deve autenticar quando o Header Authorization for nulo e não houver cookies")
+    void shouldNotAuthenticateWhenEverythingIsNull() throws Exception {
+        // Arrange
+        request.setCookies(null); 
+
+        // Act
+        securityFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
 }

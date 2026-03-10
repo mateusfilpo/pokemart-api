@@ -110,6 +110,25 @@ class CatalogControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/items/all: Deve retornar todos os itens (incluindo inativos) com status 200 OK")
+    void shouldGetAllItemsPaginates() throws Exception {
+        // Arrange
+        when(catalogUseCase.getAllItems(0, 10, null, null, "price-asc")).thenReturn(mockPageResult);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/items/all")
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "price-asc")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.data[0].name").value("Hyper Potion"));
+
+        verify(catalogUseCase, times(1)).getAllItems(0, 10, null, null, "price-asc");
+    }
+
+    @Test
     @DisplayName("GET /api/items/{id}: Deve retornar os detalhes do item com status 200 OK")
     void shouldGetItemDetails() throws Exception {
         when(catalogUseCase.getItemDetails(mockItemId)).thenReturn(mockItem);

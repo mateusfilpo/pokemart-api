@@ -179,4 +179,69 @@ class OrderPersistenceAdapterTest {
         
         verify(orderRepository, times(1)).findAll();
     }
+
+    @Test
+    @DisplayName("save: Deve usar o item do relacionamento se não encontrar no banco (branch orElse)")
+    void shouldSaveOrderUsingFallbackItemWhenNotFoundInDb() {
+        // Arrange
+        when(itemRepository.findById(any())).thenReturn(Optional.empty());
+        when(orderRepository.save(any(OrderNode.class))).thenReturn(mockOrderNode);
+
+        // Act
+        orderPersistenceAdapter.save(mockOrder);
+
+        // Assert
+        verify(itemRepository).findById(mockItemId);
+        verify(orderRepository).save(any(OrderNode.class));
+    }
+
+    @Test
+    @DisplayName("save: Deve cobrir as branches onde a lista de itens é nula ou vazia (pula o if)")
+    void shouldCoverBranchesWhenItemsAreNullOrEmpty() {
+        Order orderEmpty = Order.builder().id(mockOrderId).items(List.of()).build();
+        OrderNode nodeEmpty = OrderNode.builder().id(mockOrderId).items(List.of()).build();
+        
+        when(orderRepository.save(any(OrderNode.class))).thenReturn(nodeEmpty);
+        orderPersistenceAdapter.save(orderEmpty);
+
+        Order orderNull = Order.builder().id(mockOrderId).items(null).build();
+        
+        orderPersistenceAdapter.save(orderNull);
+
+        // Assert
+        verify(itemRepository, never()).findById(any());
+        verify(orderRepository, times(2)).save(any(OrderNode.class));
+    }
+
+    @Test
+    @DisplayName("findByUserId: Deve cobrir todas as branches do filtro (usuário nulo ou ID diferente)")
+    void shouldCoverAllFilterBranchesInFindByUserId() {
+        // Arrange
+        OrderNode myOrder = OrderNode.builder()
+            .id(mockOrderId)
+            .user(UserNode.builder().id(mockUserId).build())
+            .items(List.of())
+            .build();
+            
+        OrderNode otherOrder = OrderNode.builder()
+            .id(UUID.randomUUID())
+            .user(UserNode.builder().id(UUID.randomUUID()).build())
+            .items(List.of())
+            .build();
+            
+        OrderNode orphanOrder = OrderNode.builder()
+            .id(UUID.randomUUID())
+            .user(null) 
+            .items(List.of())
+            .build();
+
+        when(orderRepository.findAll()).thenReturn(List.of(myOrder, otherOrder, orphanOrder));
+
+        // Act
+        List<Order> result = orderPersistenceAdapter.findByUserId(mockUserId);
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals(mockOrderId, result.get(0).getId());
+    }
 }

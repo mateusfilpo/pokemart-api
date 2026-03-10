@@ -1,10 +1,27 @@
 package br.com.filpo.pokemart.application.services;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.isNull;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Category;
@@ -13,17 +30,6 @@ import br.com.filpo.pokemart.domain.models.PageResult;
 import br.com.filpo.pokemart.domain.ports.out.CategoryRepositoryPort;
 import br.com.filpo.pokemart.domain.ports.out.ItemRepositoryPort;
 import br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.ItemRequestDTO;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogServiceTest {
@@ -188,5 +194,69 @@ class CatalogServiceTest {
         verify(itemRepository, times(1)).findActiveItems(
             eq(0), eq(10), isNull(), eq("poke ball"), eq("price-asc")
         );
+    }
+
+    @Test
+    @DisplayName("Deve buscar todos os itens (Admin)")
+    void shouldGetAllItems() {
+        // Arrange
+        PageResult<Item> mockPage = new PageResult<>(List.of(mockItem), 1L, 1, 0, false);
+        when(itemRepository.findAllItems(0, 10, null, "potion", "price-asc")).thenReturn(mockPage);
+
+        // Act
+        PageResult<Item> result = catalogService.getAllItems(0, 10, null, "potion", "price-asc");
+
+        // Assert
+        assertNotNull(result);
+        verify(itemRepository, times(1)).findAllItems(0, 10, null, "potion", "price-asc");
+    }
+
+    @Test
+    @DisplayName("Deve buscar estatísticas de categorias agrupadas")
+    void shouldGetCategoryStats() {
+        // Arrange
+        br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.CategoryStatsDTO stats = 
+            new br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.CategoryStatsDTO("Poké Balls", 10L);
+        when(itemRepository.countActiveItemsByCategory("poke")).thenReturn(List.of(stats));
+
+        // Act
+        List<br.com.filpo.pokemart.infrastructure.adapters.in.web.dto.CategoryStatsDTO> result = 
+            catalogService.getCategoryStats("Póké"); 
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals("Poké Balls", result.get(0).getCategory());
+        verify(itemRepository, times(1)).countActiveItemsByCategory("poke");
+    }
+
+    @Test
+    @DisplayName("Deve atualizar o item alterando explicitamente o status 'deleted' (Cobre branch)")
+    void shouldUpdateItemChangingDeletedStatus() {
+        // Arrange
+        requestDTO.setDeleted(true);
+        when(itemRepository.findById(mockItemId)).thenReturn(Optional.of(mockItem));
+        when(categoryRepository.findByName("Poké Balls")).thenReturn(Optional.of(mockCategory));
+        when(itemRepository.save(any(Item.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Item result = catalogService.updateItem(mockItemId, requestDTO);
+
+        // Assert
+        assertTrue(result.getDeleted(), "O status deleted deveria ter sido atualizado para true");
+    }
+
+    @Test
+    @DisplayName("Deve buscar itens ativos com busca nula para cobrir a branch nula do normalizeText")
+    void shouldGetActiveItemsWithNullSearch() {
+        // Arrange
+        PageResult<Item> mockPage = new PageResult<>(List.of(mockItem), 1L, 1, 0, false);
+        when(itemRepository.findActiveItems(0, 10, null, "", "price-asc")).thenReturn(mockPage);
+
+        // Act 
+        PageResult<Item> result = catalogService.getActiveItems(0, 10, null, null, "price-asc");
+
+        // Assert
+        assertNotNull(result);
+        verify(itemRepository, times(1)).findActiveItems(0, 10, null, "", "price-asc");
     }
 }
