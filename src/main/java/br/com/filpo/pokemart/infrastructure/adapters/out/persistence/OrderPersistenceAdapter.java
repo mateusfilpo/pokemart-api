@@ -1,17 +1,19 @@
 package br.com.filpo.pokemart.infrastructure.adapters.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import br.com.filpo.pokemart.domain.models.Order;
 import br.com.filpo.pokemart.domain.ports.out.OrderRepositoryPort;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.OrderItemRelationship;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.mapper.OrderMapper;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.repositories.SpringDataItemRepository;
 import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.repositories.SpringDataOrderRepository;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -24,7 +26,7 @@ public class OrderPersistenceAdapter implements OrderRepositoryPort {
     public Order save(Order order) {
         var node = OrderMapper.toNode(order);
 
-        if (node.getItems() != null) {
+        if (!node.getItems().isEmpty()) { 
             List<OrderItemRelationship> fullItems = node
                 .getItems()
                 .stream()
