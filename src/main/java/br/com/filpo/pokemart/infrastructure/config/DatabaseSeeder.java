@@ -11,12 +11,14 @@ import java.text.Normalizer;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+@Profile("!test")
 @Component
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
