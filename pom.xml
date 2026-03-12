@@ -108,6 +108,23 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+			<version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>neo4j</artifactId>
+			<version>1.21.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
 	</dependencies>
 
 	<build>
@@ -139,11 +156,13 @@
 			<plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.14</version> 
+                <version>0.8.14</version>
 				<configuration>
                     <excludes>
-                        <exclude>br/com/filpo/pokemart/PokemartApiApplication.class</exclude>
-                        <exclude>br/com/filpo/pokemart/infrastructure/config/**</exclude>
+                        <exclude
+                        >br/com/filpo/pokemart/PokemartApiApplication.class</exclude>
+                        <exclude
+                        >br/com/filpo/pokemart/infrastructure/config/**</exclude>
                     </excludes>
                 </configuration>
 				<executions>
