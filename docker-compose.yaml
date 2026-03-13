@@ -1,0 +1,50 @@
+services:
+  neo4j:
+    image: neo4j:5
+    container_name: pokemart-neo4j
+    ports:
+      - "7474:7474" # Painel Web (Browser)
+      - "7687:7687" # Conexão da API (Bolt)
+    environment:
+      - NEO4J_AUTH=neo4j/pokemart2026 
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p pokemart2026 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  redis:
+    image: redis:7.2.4-alpine
+    container_name: pokemart-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pokemart-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker 
+    depends_on:
+      neo4j:
+        condition: service_healthy 
+      redis:
+        condition: service_healthy 
+
+volumes:
+  neo4j_data:
+  redis_data:
