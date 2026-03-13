@@ -47,7 +47,7 @@ import br.com.filpo.pokemart.infrastructure.adapters.out.persistence.entities.Us
 @WebMvcTest(
     controllers = CheckoutController.class,
     excludeAutoConfiguration = {SecurityAutoConfiguration.class},
-    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|config).*")
+    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|adapters.in.web.RateLimit|config).*")
 )
 @AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, CheckoutControllerTest.MockSecurityConfig.class})

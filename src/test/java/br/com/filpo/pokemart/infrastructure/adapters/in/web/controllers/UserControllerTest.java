@@ -48,7 +48,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @WebMvcTest(
     controllers = UserController.class,
     excludeAutoConfiguration = {SecurityAutoConfiguration.class},
-    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|config).*")
+    excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|adapters.in.web.RateLimit|config).*")
 )
 @AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, UserControllerTest.MockSecurityConfig.class})
