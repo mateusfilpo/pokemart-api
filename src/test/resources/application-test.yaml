@@ -24,3 +24,9 @@ api:
   security:
     token:
       secret: "segredoteste123456789012345678901234567890" # Segredo fixo para gerar JWTs nos testes
+
+rate-limit:
+  capacity: 50        
+  minutes: 1          
+  login-capacity: 10  
+  login-minutes: 1    

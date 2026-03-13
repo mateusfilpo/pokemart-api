@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.RateLimitFilter;
 import br.com.filpo.pokemart.infrastructure.adapters.out.security.SecurityFilter;
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfigurations {
 
     private final SecurityFilter securityFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Autowired
     @Qualifier("handlerExceptionResolver")
@@ -36,51 +38,43 @@ public class SecurityConfigurations {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity)
-        throws Exception {
+            throws Exception {
         return httpSecurity
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .authorizeHttpRequests(authorize ->
-                authorize
-                    .requestMatchers("/error").permitAll()
-                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/items/all").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.POST, "/api/items").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PUT, "/api/items/**").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.PATCH, "/api/items/**").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
-                    .anyRequest().authenticated()
-            )
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint((request, response, authException) -> 
-                    exceptionResolver.resolveException(request, response, null, authException)
-                )
-                .accessDeniedHandler((request, response, accessDeniedException) -> 
-                    exceptionResolver.resolveException(request, response, null, accessDeniedException)
-                )
-            )
-            .addFilterBefore(
-                securityFilter,
-                UsernamePasswordAuthenticationFilter.class
-            )
-            .build();
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/items").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/items/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/items/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/items").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/items/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/items/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/items/**").hasRole("ADMIN")
+                        .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> exceptionResolver
+                                .resolveException(request, response, null, authException))
+                        .accessDeniedHandler((request, response, accessDeniedException) -> exceptionResolver
+                                .resolveException(request, response, null, accessDeniedException)))
+                .addFilterBefore(rateLimitFilter, org.springframework.security.web.authentication.logout.LogoutFilter.class)
+                .addFilterBefore(
+                        securityFilter,
+                        UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(
-        AuthenticationConfiguration authenticationConfiguration
-    ) throws Exception {
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -94,20 +88,16 @@ public class SecurityConfigurations {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-            Arrays.asList("http://127.0.0.1:5500", "http://localhost:5500")
-        );
+                Arrays.asList("http://127.0.0.1:5500", "http://localhost:5500"));
 
         configuration.setAllowedMethods(
-            Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        );
+                Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         configuration.setAllowedHeaders(
-            Arrays.asList("Authorization", "Content-Type", "Accept", "Cookie")
-        );
+                Arrays.asList("Authorization", "Content-Type", "Accept", "Cookie"));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
