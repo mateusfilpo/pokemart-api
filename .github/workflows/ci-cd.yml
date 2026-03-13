@@ -95,5 +95,7 @@ jobs:
             sudo mkdir -p /opt/pokemart
             sudo mv /tmp/pokemart-deploy/*.jar /opt/pokemart/app.jar
             sudo rm -rf /tmp/pokemart-deploy
+            sudo chown www-data:www-data /opt/pokemart/app.jar
+            sudo chmod 644 /opt/pokemart/app.jar
             sudo systemctl restart pokemart-api
             sudo systemctl status pokemart-api --no-pager
