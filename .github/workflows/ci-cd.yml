@@ -82,7 +82,7 @@ jobs:
           username: ${{ secrets.GCP_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
           source: "target/*.jar"
-          target: "/opt/pokemart"
+          target: "/tmp/pokemart-deploy"
           strip_components: 1
 
       - name: Restart Service via SSH
@@ -92,6 +92,8 @@ jobs:
           username: ${{ secrets.GCP_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
-            sudo mv /opt/pokemart/*.jar /opt/pokemart/app.jar
+            sudo mkdir -p /opt/pokemart
+            sudo mv /tmp/pokemart-deploy/*.jar /opt/pokemart/app.jar
+            sudo rm -rf /tmp/pokemart-deploy
             sudo systemctl restart pokemart-api
             sudo systemctl status pokemart-api --no-pager
