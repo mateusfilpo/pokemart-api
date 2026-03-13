@@ -1,15 +1,17 @@
 package br.com.filpo.pokemart.application.services;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
 import br.com.filpo.pokemart.domain.exceptions.ResourceNotFoundException;
 import br.com.filpo.pokemart.domain.models.Category;
 import br.com.filpo.pokemart.domain.ports.in.CategoryUseCase;
 import br.com.filpo.pokemart.domain.ports.out.CategoryRepositoryPort;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class CategoryService implements CategoryUseCase {
     private final CategoryRepositoryPort categoryRepository;
 
     @Override
-    @Cacheable(value = "categories")
+    @Cacheable(value = "categories", key = "'all'")
     public List<Category> listAllCategories() {
         return categoryRepository.findAll();
     }
@@ -28,12 +30,14 @@ public class CategoryService implements CategoryUseCase {
         return categoryRepository
             .findById(id)
             .orElseThrow(() ->
-                new ResourceNotFoundException("Category not found with ID: " + id)
+                new ResourceNotFoundException(
+                    "Category not found with ID: " + id
+                )
             );
     }
 
     @Override
-    @CacheEvict(value = "categories", allEntries = true)
+    @CacheEvict(value = "categories", key = "'all'")
     public Category createCategory(Category category) {
         category.setId(UUID.randomUUID());
         return categoryRepository.save(category);
