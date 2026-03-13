@@ -37,7 +37,7 @@ import br.com.filpo.pokemart.infrastructure.adapters.in.web.exceptions.GlobalExc
 import tools.jackson.databind.ObjectMapper;
 
 @WebMvcTest(controllers = CategoryController.class, excludeAutoConfiguration = {
-        SecurityAutoConfiguration.class }, excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|config).*"))
+        SecurityAutoConfiguration.class }, excludeFilters = @ComponentScan.Filter(type = FilterType.REGEX, pattern = "br.com.filpo.pokemart.infrastructure.(adapters.out.security|adapters.in.web.RateLimit|config).*"))
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 class CategoryControllerTest {
