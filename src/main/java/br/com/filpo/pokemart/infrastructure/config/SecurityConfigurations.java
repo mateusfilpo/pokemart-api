@@ -88,7 +88,8 @@ public class SecurityConfigurations {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                Arrays.asList("http://127.0.0.1:5500", "http://localhost:5500"));
+                Arrays.asList("http://127.0.0.1:5500", "http://localhost:5500", 
+                              "https://pokemart.filpo.com.br", "https://www.pokemart.filpo.com.br"));
 
         configuration.setAllowedMethods(
                 Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
