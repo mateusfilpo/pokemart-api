@@ -22,6 +22,7 @@ public class OrderMapper {
                             .name(itemNode.getName())
                             .price(rel.getPrice() != null ? rel.getPrice() : itemNode.getPrice())
                             .quantity(rel.getQuantity())
+                            .imageUrl(itemNode.getImageUrl())
                             .build();
                     })
                     .collect(Collectors.toList());

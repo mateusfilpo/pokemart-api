@@ -1,10 +1,9 @@
 package br.com.filpo.pokemart.infrastructure.adapters.in.web.dto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +21,7 @@ class OrderItemResponseDTOTest {
                 .name("Ultra Ball")
                 .price(1200.0)
                 .quantity(5)
+                .imageUrl("https://pokeapi.co/media/sprites/items/ultra-ball.png")
                 .build();
 
         // Act
@@ -32,6 +32,7 @@ class OrderItemResponseDTOTest {
         assertEquals("Ultra Ball", dto.name());
         assertEquals(5, dto.quantity());
         assertEquals(1200.0, dto.price());
+        assertEquals("https://pokeapi.co/media/sprites/items/ultra-ball.png", dto.imageUrl());
     }
 
     @Test

@@ -64,6 +64,7 @@ public class CheckoutService implements CheckoutUseCase {
                 .name(item.getName())
                 .price(item.getPrice())
                 .quantity(quantity)
+                .imageUrl(item.getImageUrl())
                 .build();
 
             orderItems.add(orderItem);

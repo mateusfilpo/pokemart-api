@@ -8,7 +8,8 @@ public record OrderItemResponseDTO(
         UUID itemId,
         String name,
         Integer quantity,
-        Double price
+        Double price,
+        String imageUrl
 ) {
     public static OrderItemResponseDTO fromDomain(OrderItem orderItem) {
         if (orderItem == null) return null;
@@ -17,7 +18,8 @@ public record OrderItemResponseDTO(
                 orderItem.getProductId(), 
                 orderItem.getName(),
                 orderItem.getQuantity(),
-                orderItem.getPrice() 
+                orderItem.getPrice(),
+                orderItem.getImageUrl()
         );
     }
 }
