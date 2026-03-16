@@ -16,6 +16,10 @@ spring:
       password: ${REDIS_PASSWORD}
       # ssl:
       # enabled: true
+  
+  threads:
+    virtual:
+      enabled: true
 
 logging:
   level:
@@ -38,4 +42,4 @@ rate-limit:
   capacity: 50        
   minutes: 1          
   login-capacity: 10  
-  login-minutes: 1    
+  login-minutes: 1 
