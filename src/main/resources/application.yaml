@@ -39,3 +39,15 @@ rate-limit:
   minutes: 1          
   login-capacity: 10  
   login-minutes: 1    
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: pokemart-api

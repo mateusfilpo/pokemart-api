@@ -10,7 +10,7 @@ spring:
       port: 6379
       password: ""
 
-  api:
-    security:
-      token:
-        secret: minha-chave-secreta-docker-2026
+api:
+  security:
+    token:
+      secret: minha-chave-secreta-docker-2026

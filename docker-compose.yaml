@@ -46,6 +46,33 @@ services:
       redis:
         condition: service_healthy
 
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: pokemart-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  # ==========================================
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: pokemart-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+
 volumes:
   neo4j_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
