@@ -13,6 +13,10 @@ spring:
       host: localhost
       port: 6379
       password: "" 
+  
+  threads:
+    virtual:
+      enabled: true
 
 logging:
   level:
