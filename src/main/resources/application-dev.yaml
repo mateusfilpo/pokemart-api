@@ -7,3 +7,8 @@ logging:
     "[org.springframework.data.neo4j]": INFO
     "[org.springframework.data.neo4j.cypher]": DEBUG
     "[org.springframework.cache]": TRACE
+
+api:
+  security:
+    cookie:
+      secure: false
