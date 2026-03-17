@@ -4,24 +4,22 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import br.com.filpo.pokemart.infrastructure.adapters.in.web.exceptions.CustomError;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import br.com.filpo.pokemart.infrastructure.adapters.in.web.exceptions.CustomError;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final ProxyManager<byte[]> proxyManager;
+
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Value("${rate-limit.capacity}")
     private long globalCapacity;
@@ -49,7 +49,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String path = request.getRequestURI();
         if (path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui")) {
             filterChain.doFilter(request, response);
@@ -59,7 +59,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String clientIp = getClientIP(request);
         boolean isLoginRequest = path.equals("/api/auth/login") && request.getMethod().equalsIgnoreCase("POST");
         String cacheKeyString = isLoginRequest ? "rate_limit:login:" + clientIp : "rate_limit:global:" + clientIp;
-        
+
         byte[] cacheKey = cacheKeyString.getBytes(StandardCharsets.UTF_8);
 
         BucketConfiguration bucketConfig = BucketConfiguration.builder()
@@ -87,26 +87,24 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIP(HttpServletRequest request) {
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader == null || xfHeader.isEmpty()) {
-            return request.getRemoteAddr();
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
         }
-        return xfHeader.split(",")[0];
+        return request.getRemoteAddr();
     }
 
-    private void writeRateLimitResponse(HttpServletRequest request, HttpServletResponse response, long waitForRefill) throws IOException {
+    private void writeRateLimitResponse(HttpServletRequest request, HttpServletResponse response, long waitForRefill)
+            throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType("application/json");
 
         CustomError errorResponse = new CustomError(
-            Instant.now(), 
-            HttpStatus.TOO_MANY_REQUESTS.value(),
-            "Rate limit exceeded. Try again in " + waitForRefill + " seconds.",
-            request.getRequestURI() 
-        );
+                Instant.now(),
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                "Rate limit exceeded. Try again in " + waitForRefill + " seconds.",
+                request.getRequestURI());
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        response.getWriter().write(mapper.writeValueAsString(errorResponse));
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 }

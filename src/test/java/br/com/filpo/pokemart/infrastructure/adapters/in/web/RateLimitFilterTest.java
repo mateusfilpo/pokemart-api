@@ -2,20 +2,19 @@ package br.com.filpo.pokemart.infrastructure.adapters.in.web;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -223,13 +222,13 @@ class RateLimitFilterTest {
     }
 
     @Test
-    @DisplayName("Deve usar X-Forwarded-For como IP do cliente quando disponível")
-    void shouldUseXForwardedForHeaderAsClientIP() throws Exception {
+    @DisplayName("Deve usar X-Real-IP como IP do cliente quando disponível (origem Nginx)")
+    void shouldUseXRealIpHeaderAsClientIP() throws Exception {
         // Arrange
         request.setRequestURI("/api/items");
         request.setMethod("GET");
         request.setRemoteAddr("127.0.0.1");
-        request.addHeader("X-Forwarded-For", "203.0.113.50, 70.41.3.18");
+        request.addHeader("X-Real-IP", "203.0.113.50");
 
         ConsumptionProbe probe = mock(ConsumptionProbe.class);
         when(probe.isConsumed()).thenReturn(true);
@@ -242,15 +241,14 @@ class RateLimitFilterTest {
         // Act
         rateLimitFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert - Deve usar o primeiro IP do X-Forwarded-For (203.0.113.50), não o
-        // remoteAddr
+        // Assert - Deve usar X-Real-IP (setado pelo Nginx)
         verify(remoteBucketBuilder).build(
                 eq("rate_limit:global:203.0.113.50".getBytes(java.nio.charset.StandardCharsets.UTF_8)),
                 any(BucketConfiguration.class));
     }
 
     @Test
-    @DisplayName("Deve usar remoteAddr quando X-Forwarded-For não estiver presente")
+    @DisplayName("Deve usar remoteAddr quando X-Real-IP não estiver presente (acesso direto)")
     void shouldUseRemoteAddrWhenXForwardedForIsAbsent() throws Exception {
         // Arrange
         request.setRequestURI("/api/items");
