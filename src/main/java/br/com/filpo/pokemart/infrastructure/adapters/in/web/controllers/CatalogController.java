@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/items")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class CatalogController implements CatalogDoc {
 
