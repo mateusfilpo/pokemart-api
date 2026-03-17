@@ -1,5 +1,6 @@
 package br.com.filpo.pokemart.infrastructure.adapters.in.web.controllers;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,9 @@ public class AuthController implements AuthDoc {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
 
+    @Value("${api.security.cookie.secure:false}") 
+    private boolean isCookieSecure;
+
     @Override
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationRequestDTO data) {
@@ -42,7 +46,7 @@ public class AuthController implements AuthDoc {
 
         ResponseCookie jwtCookie = ResponseCookie.from("pokemart_token", token)
             .httpOnly(true)
-            .secure(false) 
+            .secure(isCookieSecure) 
             .path("/")
             .maxAge(2 * 60 * 60)
             .sameSite("Lax")
@@ -58,7 +62,7 @@ public class AuthController implements AuthDoc {
     public ResponseEntity<Void> logout() {
         ResponseCookie deleteCookie = ResponseCookie.from("pokemart_token", "")
             .httpOnly(true)
-            .secure(false)
+            .secure(isCookieSecure)
             .path("/")
             .maxAge(0)
             .sameSite("Lax")

@@ -26,6 +26,9 @@ api:
   security:
     token:
       secret: ${JWT_SECRET}
+    
+    cookie:
+      secure: true
 
 springdoc:
   swagger-ui:
