@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: pokemart-api-dev
+
+logging:
+  level:
+    "[org.springframework.data.neo4j]": INFO
+    "[org.springframework.data.neo4j.cypher]": DEBUG
+    "[org.springframework.cache]": TRACE

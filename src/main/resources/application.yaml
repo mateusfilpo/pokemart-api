@@ -16,16 +16,11 @@ spring:
       password: ${REDIS_PASSWORD}
       # ssl:
       # enabled: true
-  
+
   threads:
     virtual:
       enabled: true
 
-logging:
-  level:
-    "[org.springframework.data.neo4j]": INFO
-    "[org.springframework.data.neo4j.cypher]": DEBUG
-    "[org.springframework.cache]": TRACE
 
 api:
   security:
@@ -42,4 +37,16 @@ rate-limit:
   capacity: 50        
   minutes: 1          
   login-capacity: 10  
-  login-minutes: 1 
+  login-minutes: 1    
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: pokemart-api
