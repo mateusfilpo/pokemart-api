@@ -6,11 +6,11 @@ services:
       - "7474:7474" # Painel Web (Browser)
       - "7687:7687" # Conexão da API (Bolt)
     environment:
-      - NEO4J_AUTH=neo4j/pokemart2026
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: [ "CMD-SHELL", "cypher-shell -u neo4j -p pokemart2026 'RETURN 1' || exit 1" ]
+      test: [ "CMD-SHELL", "cypher-shell -u ${NEO4J_USER} -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,12 +19,13 @@ services:
   redis:
     image: redis:7.2.4-alpine
     container_name: pokemart-redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,7 +40,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - JWT_SECRET=minha-chave-secreta-docker-2026
+      - JWT_SECRET=${JWT_SECRET}
     depends_on:
       neo4j:
         condition: service_healthy
