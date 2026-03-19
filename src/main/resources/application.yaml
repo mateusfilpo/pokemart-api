@@ -24,11 +24,10 @@ spring:
 
 api:
   security:
-    token:
-      secret: ${JWT_SECRET}
-    
     cookie:
       secure: true
+    token:
+      secret: ${JWT_SECRET}
 
 springdoc:
   swagger-ui:
@@ -43,13 +42,15 @@ rate-limit:
   login-minutes: 1    
 
 management:
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:
         include: health,prometheus
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
   metrics:
     tags:
       application: pokemart-api
